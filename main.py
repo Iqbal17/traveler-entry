@@ -52,6 +52,13 @@ book is on the internet, and the internet is more than books), while the
 revision turns it into a comparison of scale, which the judge expressly
 allows ("a single comparison may carry the whole sentence, as long as the
 comparison is true"), and it tightens the sentence by 10 characters.
+
+Pass 3 — validation guard. A second agent added a gate check inside
+main() (see below): the entry is refused, with a clear error, unless it
+is non-blank UTF-8 text of 1 to 200 characters. The sealed gate scores
+an invalid entry 0 with no rate, so the program must never be able to
+emit one even if LINE is edited later; the guard changes nothing when
+the line is valid.
 """
 
 import os
@@ -64,6 +71,11 @@ LINE = (
 
 
 def main():
+    if not LINE.strip():
+        raise ValueError("entry line must not be blank")
+    LINE.encode("utf-8")  # proves the line is valid UTF-8 text
+    if len(LINE) > 200:
+        raise ValueError(f"entry line is {len(LINE)} characters, over the 200-character gate")
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
     os.makedirs(out_dir, exist_ok=True)
     with open(os.path.join(out_dir, "entry.txt"), "w", encoding="utf-8") as f:
